@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Movie, Review, Rating
+from .models import Movie, Review, Rating, Actor
 
 
 class MovieListSerializer(serializers.ModelSerializer):
@@ -43,19 +43,6 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ('name', 'text', 'children')
 
 
-class MovieDetailSerializer(serializers.ModelSerializer):
-    """Полный фильм"""
-    category = serializers.SlugRelatedField(slug_field='name', read_only=True)
-    actors = serializers.SlugRelatedField(slug_field='name', read_only=True, many=True)
-    directors = serializers.SlugRelatedField(slug_field='name', read_only=True, many=True)
-    genres = serializers.SlugRelatedField(slug_field='name', read_only=True, many=True)
-    reviews = ReviewSerializer(many=True)
-
-    class Meta:
-        model = Movie
-        exclude = ('draft',)
-
-
 class CreateRatingSerializer(serializers.ModelSerializer):
     """Добавление рейтинга пользователем"""
     class Meta:
@@ -69,3 +56,30 @@ class CreateRatingSerializer(serializers.ModelSerializer):
             defaults={'star': validated_data.get("star")}
         )
         return rating
+
+
+class ActorListSerializer(serializers.ModelSerializer):
+    """Вывод списка актеров"""
+    class Meta:
+        model = Actor
+        exclude = ('image', 'age', 'description')
+
+
+class ActorDetailSerializer(serializers.ModelSerializer):
+    """Вывод информации об актере"""
+    class Meta:
+        model = Actor
+        fields = '__all__'
+
+
+class MovieDetailSerializer(serializers.ModelSerializer):
+    """Полный фильм"""
+    category = serializers.SlugRelatedField(slug_field='name', read_only=True)
+    actors = ActorListSerializer(read_only=True, many=True)
+    directors = ActorListSerializer(read_only=True, many=True)
+    genres = serializers.SlugRelatedField(slug_field='name', read_only=True, many=True)
+    reviews = ReviewSerializer(many=True)
+
+    class Meta:
+        model = Movie
+        exclude = ('draft',)
