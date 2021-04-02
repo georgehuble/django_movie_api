@@ -1,17 +1,22 @@
 from django.db import models
-from rest_framework import generics
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from movies.models import Movie, Actor
 from .serializers import MovieListSerializer, MovieDetailSerializer, ReviewCreateSerializer, ReviewSerializer, \
     CreateRatingSerializer, ActorListSerializer, ActorDetailSerializer
-from .service import get_client_ip
+from .service import get_client_ip, MovieFilter
 
 
 class MovieListView(generics.ListAPIView):
     """Вывод списка фильмов"""
     serializer_class = MovieListSerializer
+    filter_backends = (DjangoFilterBackend, )
+    filterset_class = MovieFilter
+    permission_classes = [permissions.IsAuthenticated]
+
     def get_queryset(self):
         movies = Movie.objects.filter(draft=False).annotate(
             rating_user=models.Count('ratings', filters=models.Q(ratings__ip=get_client_ip(self.request)))
